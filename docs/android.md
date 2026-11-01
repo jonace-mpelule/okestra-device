@@ -6,7 +6,7 @@ The Linux server runs the Android SDK, Java and one KVM-accelerated emulator. Yo
 
 ## Install the matching packages
 
-Use matching server and Mac packages from the local `dist/` directory until this change is published. The Android host must be **x86_64 Linux with `/dev/kvm` available**; enable nested virtualization first when applicable. Mac apps support Apple Silicon and Intel on macOS 13+. Liquid Glass uses the native API on supporting macOS versions with a material fallback on older releases.
+Download the current app and matching server/tools packages from [GitHub Releases](https://github.com/jonace-mpelule/okestra-device/releases/latest). Start with the [beginner setup guide](../README.md#get-started-with-a-usb-phone) if this is your first installation. The Android host must be **x86_64 Linux with `/dev/kvm` available**; enable nested virtualization first when applicable. Mac apps support Apple Silicon and Intel on macOS 13+. Liquid Glass uses the native API on supporting macOS versions with a material fallback on older releases.
 
 On Ubuntu/Debian, extract the Linux service package, enter its directory, then run:
 
@@ -26,15 +26,15 @@ sudo ./setup-android-server.sh --sdk /var/lib/okestra-device/android-sdk
 
 For an existing combined Okestra server, follow [the migration guide](migration.md) before installing. The standalone service has its own account, paths, token and listener.
 
-On the Mac, extract the matching package and double-click **Install Android.command**, or run:
+On the Mac, install the universal DMG from the release page. Android platform-tools are installed separately; follow the [Mac connection-tools setup](../README.md#2-install-the-android-connection-tools-once). For remote-server pairing, extract the matching Mac CLI archive and run:
 
 ```sh
-./install-android.sh
+./install-cli.sh --android
 ```
 
-The wizard installs the Device app into `~/Applications`, installs the CLI, offers checksum-verified Google platform tools and guides server pairing. Platform tools live at `~/Library/Application Support/Okestra Device/platform-tools`. The Device app bundles its matching helper so an older terminal installation cannot change their behavior. Quit and reopen apps after updating.
+This installs the standalone CLI, offers checksum-verified Google platform-tools, and guides server pairing. Current CLI archives do not include the Mac app; install it from the DMG. Platform tools live at `~/Library/Application Support/Okestra Device/platform-tools`. The Device app bundles its matching helper, so an older terminal installation cannot change its behavior.
 
-Developer packages are ad-hoc signed, not Developer ID signed or notarized. Downloaded builds may require Finder → right-click → Open. Do not disable Gatekeeper globally.
+Current releases are ad-hoc signed, not Apple-notarized. If macOS blocks first launch, attempt to open the app, then use **System Settings → Privacy & Security → Open Anyway**. Do not disable Gatekeeper globally.
 
 ## Choose a device
 
@@ -50,7 +50,7 @@ New profiles support Pixel 7 and Pixel 9 hardware templates on Android 35, with 
 
 CPU/RAM settings allocate server resources; a Pixel name does not reproduce that physical phone's processor speed. Actual performance depends on the server. Each supported model has its own frame proportions, with the guest's actual screen aspect ratio preserved during streaming, scaling and rotation. Existing AVDs without a supported model use a presentation skin and retain their actual screen ratio.
 
-The viewer retains native traffic lights without a title strip, the resizable/collapsible Swift sidebar, Liquid Glass controls, workspace appearance, frame finish and scale controls. The compact tray contains Back, Home, Screenshot, Recent Apps and Rotate. Additional actions include clipboard/paste, power, volume and navigation. **Control-Cmd-S** toggles the sidebar; **Shift-Cmd-T** opens Device Tools.
+The viewer retains native traffic lights without a title strip, the resizable/collapsible Swift sidebar, Liquid Glass controls, workspace appearance, frame finish and scale controls. The compact tray contains Back, Home, Screenshot, Recent Apps and Rotate. Additional actions include clipboard/paste, power, volume and navigation. **Control-Cmd-S** toggles the sidebar; **Shift-Cmd-D** opens Device Tools.
 
 The source menu, device switcher, refresh and connection-options menu are grouped at the top-left of the canvas. Connect/disconnect, Wi-Fi setup, reconnect and server device actions live in that options menu. The sidebar focuses on stream performance and appearance. Rotating uses the last displayed video frame for a spring rotation/resize, then fades into the newly oriented live video. It follows actual stream orientation changes, supports framed and frameless views, briefly suspends touch input during the transition, and uses a short fade when macOS Reduce Motion is enabled. Apps/devices that retain their orientation do not trigger a fake rotation.
 
