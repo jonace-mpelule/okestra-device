@@ -8,3 +8,9 @@ dist/
 .swiftpm/
 __pycache__/
 *.pyc
+
+.cache/
+.release/
+*.p12
+*.p8
+*.key

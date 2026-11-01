@@ -1115,12 +1115,17 @@ final class DeviceAppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct OkestraDeviceApp: App {
   @StateObject private var controller = DeviceController()
+  @StateObject private var updater = DeviceAppUpdater()
   @NSApplicationDelegateAdaptor(DeviceAppDelegate.self) var delegate
   var body: some Scene {
     Window("Okestra Device", id: "device") {
-      DeviceWindow(model: controller).onAppear { delegate.controller = controller }
+      DeviceWindow(model: controller).onAppear { delegate.controller = controller; updater.start() }
     }.defaultSize(width: 1120, height: 880).windowStyle(.hiddenTitleBar)
       .commands {
+        CommandGroup(after: .appInfo) {
+          Button("Check for Updates…", action: updater.check)
+            .disabled(updater.configured && !updater.canCheckForUpdates)
+        }
         DeviceDeveloperCommands(model: controller, tools: controller.developer)
         CommandGroup(replacing: .newItem) {
           ScreenshotOpenCommand(captures: controller.captures, window: { controller.viewerWindow })
@@ -1142,6 +1147,12 @@ struct OkestraDeviceApp: App {
           ShowToolsCommand()
         }
       }
+    Settings {
+      TabView {
+        DeviceUpdateSettings(updater: updater)
+          .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
+      }
+    }
     Window("Device Tools", id: "tools") {
       DeviceToolsWindow(model: controller)
     }.defaultSize(width: 340, height: 670).defaultPosition(.trailing).windowStyle(.hiddenTitleBar)

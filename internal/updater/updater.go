@@ -270,11 +270,7 @@ func Upgrade(ctx context.Context, role string, checkOnly bool, out io.Writer) er
 			return restore(errors.New("service inactive after upgrade"))
 		}
 	}
-	if role == "okestra-device" && runtime.GOOS == "darwin" {
-		if err := installMenuApp(release.archiveData); err != nil {
-			return fmt.Errorf("CLI upgraded, but Mac app update failed: %w", err)
-		}
-	}
+	// Desktop app bundles update through Sparkle. This command updates tools only.
 	fmt.Fprintf(out, "upgraded %s to %s\n", role, release.Tag)
 	return nil
 }

@@ -1,0 +1,6 @@
+{
+  "repository": "jonace-mpelule/okestra-device",
+  "signing_mode": "ad-hoc",
+  "keychain_account": "dev.okestra.device",
+  "public_ed_key": "JImYjdGHes3CyCU8WYt3/WppEZgusg3TjM7XNgO787k="
+}

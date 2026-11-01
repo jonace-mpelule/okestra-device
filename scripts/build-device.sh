@@ -2,7 +2,8 @@
 set -eu
 [ "$(uname -s)" = Darwin ] || { printf '%s\n' 'Okestra Device requires macOS.' >&2; exit 1; }
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-APP="$ROOT/dist/Okestra Device.app"
+APP=${OKESTRA_APP_OUTPUT:-"$ROOT/dist/Okestra Device.app"}
+SPARKLE=$(python3 "$ROOT/scripts/fetch-sparkle.py")
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 NETWORK_JAR="$ROOT/apps/okestra-device/Resources/okestra-network-monitor-v1.jar"
 NETWORK_SOURCE="$ROOT/apps/okestra-device/Android/NetworkMonitor.java"
@@ -13,12 +14,12 @@ NETWORK_SOURCE="$ROOT/apps/okestra-device/Android/NetworkMonitor.java"
 BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/okestra-device.XXXXXX")
 trap 'rm -rf "$BUILD_DIR"' EXIT HUP INT TERM
 for arch in arm64 x86_64; do
- swiftc -parse-as-library -O -target "$arch-apple-macosx13.0" -framework SwiftUI -framework AppKit -framework AVFoundation -framework Network -framework AVKit \
+ swiftc -parse-as-library -O -target "$arch-apple-macosx13.0" -framework SwiftUI -framework AppKit -framework AVFoundation -framework Network -framework AVKit -F "$SPARKLE" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
  "$ROOT"/apps/okestra-device/Core/*.swift \
  "$ROOT/apps/okestra-device/Transport.swift" "$ROOT/apps/okestra-device/DeveloperTransport.swift" \
  "$ROOT/apps/okestra-device/VideoReviewModel.swift" "$ROOT/apps/okestra-device/VideoReviewWorkspace.swift" "$ROOT/apps/okestra-device/WorkspaceCanvas.swift" "$ROOT/apps/okestra-device/ScreenshotEditorModel.swift" "$ROOT/apps/okestra-device/ScreenshotEditor.swift" "$ROOT/apps/okestra-device/DeviceConvenience.swift" "$ROOT/apps/okestra-device/DeviceNetwork.swift" "$ROOT/apps/okestra-device/DeviceNetworkTransport.swift" \
  "$ROOT/apps/okestra-device/DeveloperTools.swift" "$ROOT/apps/okestra-device/DeveloperWorkspace.swift" \
- "$ROOT/apps/okestra-device/DeviceWorkspace.swift" "$ROOT/apps/okestra-device/OkestraDevice.swift" -o "$BUILD_DIR/OkestraDevice-$arch"
+ "$ROOT/apps/okestra-device/AppUpdater.swift" "$ROOT/apps/okestra-device/DeviceWorkspace.swift" "$ROOT/apps/okestra-device/OkestraDevice.swift" -o "$BUILD_DIR/OkestraDevice-$arch"
  # Bundle a matching CLI so launching the app never invokes an outdated system install.
  if [ "$arch" = arm64 ]; then goarch=arm64; else goarch=amd64; fi
  GOOS=darwin GOARCH=$goarch go build -trimpath -ldflags "${OKESTRA_LDFLAGS:-}" -o "$BUILD_DIR/okestra-device-$arch" "$ROOT/cmd/okestra-device"
@@ -26,12 +27,15 @@ done
 lipo -create "$BUILD_DIR/OkestraDevice-arm64" "$BUILD_DIR/OkestraDevice-x86_64" -output "$APP/Contents/MacOS/OkestraDevice"
 lipo -create "$BUILD_DIR/okestra-device-arm64" "$BUILD_DIR/okestra-device-x86_64" -output "$APP/Contents/Helpers/okestra-device"
 cp "$ROOT/apps/okestra-device/Info.plist" "$APP/Contents/Info.plist"
-if [ -n "${OKESTRA_VERSION:-}" ]; then /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $OKESTRA_VERSION" "$APP/Contents/Info.plist"; fi
+python3 "$ROOT/scripts/configure-app.py" "$APP" "${OKESTRA_VERSION:-dev}"
 cp "$NETWORK_JAR" "$APP/Contents/Resources/"
 cp "$ROOT/third_party/scrcpy/scrcpy-server-3.3.4.jar" "$APP/Contents/Resources/"
 cp "$ROOT/third_party/scrcpy/LICENSE" "$APP/Contents/Resources/SCRCPY-LICENSE"
 cp "$ROOT/third_party/scrcpy/README.md" "$APP/Contents/Resources/SCRCPY-NOTICE.md"
 "$ROOT/scripts/build-icon.sh" "$APP/Contents/Resources"
-# Ad-hoc signing gives the locally built bundle a consistent integrity seal; it is not notarization.
-codesign --force --deep --sign - "$APP"
+mkdir -p "$APP/Contents/Frameworks"
+rm -rf "$APP/Contents/Frameworks/Sparkle.framework"
+ditto "$SPARKLE/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
+cp "$SPARKLE/LICENSE" "$APP/Contents/Resources/SPARKLE-LICENSE"
+python3 "$ROOT/scripts/sign-app.py" "$APP"
 printf 'Built %s\n' "$APP"

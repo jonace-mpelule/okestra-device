@@ -9,7 +9,7 @@ let package = Package(
     .target(
       name: "DeviceTransport", dependencies: ["DeviceCore"], path: ".",
       exclude: [
-        "AppIcon.icon", "Assets.xcassets", "Archive", "Core", "Tests", "EditorTests", "Android", "Resources", "DeviceNetwork.swift",
+        "AppUpdater.swift", "AppIcon.icon", "Assets.xcassets", "Archive", "Core", "Tests", "EditorTests", "Android", "Resources", "DeviceNetwork.swift",
         "DeviceConvenience.swift", "ScreenshotEditor.swift", "ScreenshotEditorModel.swift",
         "WorkspaceCanvas.swift", "VideoReviewModel.swift", "VideoReviewWorkspace.swift",
         "OkestraDevice.swift",

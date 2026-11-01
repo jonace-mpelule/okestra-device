@@ -4,6 +4,12 @@ A standalone Android device workspace for macOS, with its own optional Linux emu
 
 The native Mac app includes live video and controls, local ADB access, saved hardware profiles, APK installation, Logcat, deep links, network inspection, audio playback, recording and review, screenshot editing, and diagnostic exports. Archived Flutter/Expo server build workflows are retained behind explicit opt-in.
 
+## Distribute and update
+
+Run `make release-setup` once to configure update signing, commit the generated public key, then use `make publish` to build and publish the next GitHub release. `make publish VERSION=0.2.0` selects an explicit version. Use `make release-build VERSION=0.2.0` to prepare artifacts for review without publishing.
+
+Users install the universal DMG from GitHub Releases. The app includes **Check for Updates…** and automatic update settings. The current distribution mode works without an Apple Developer account; first launch requires macOS **Open Anyway** approval because it is not notarized. [Distribution guide](docs/distribution.md) covers setup, signing-key backup, retrying releases and optional Developer ID signing.
+
 ## Build
 
 Requirements: Go 1.26.2+, macOS/Xcode for the Mac app. Android emulator hosting requires x86_64 Linux, KVM, Java and the Android SDK.
@@ -59,6 +65,6 @@ Use an encrypted private network, or HTTPS. Server management uses a bearer toke
 
 `/healthz` reports process liveness. Authenticated `/readyz` reports whether the Android runtime is enabled; inspect `/v1/android/status` or `android doctor` for SDK/KVM/device diagnostics. Existing Android routes remain under `/v1/android/`. There are no container/build/image endpoints.
 
-See [device setup and features](docs/android.md), [migration from combined Okestra](docs/migration.md), and the [archived workflows](docs/archive/README.md). Updates use this repository's releases: `okestra-device upgrade` or `sudo okestra-device-service upgrade`. `make release` tests, packages and publishes the next release; it requires GitHub authentication. No release is published by building locally.
+See [device setup and features](docs/android.md), [migration from combined Okestra](docs/migration.md), and the [archived workflows](docs/archive/README.md). Updates use this repository's releases: `okestra-device upgrade` or `sudo okestra-device-service upgrade`. `make publish` creates the desktop release and update feed; it requires GitHub authentication and the configured update-signing key. No release is published by building locally.
 
 Extracted from `jonace-mpelule/okestra` at checkpoint `1aa5a3c`, including all Device work present at extraction. The Docker CLI, service and menu app remain in that repository.
