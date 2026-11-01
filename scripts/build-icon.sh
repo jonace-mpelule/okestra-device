@@ -8,6 +8,7 @@ OUTPUT=$(CDPATH= cd -- "$OUTPUT" && pwd)
 BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/okestra-icon.XXXXXX")
 trap 'rm -rf "$BUILD_DIR"' EXIT HUP INT TERM
 xcrun actool "$ROOT/apps/okestra-device/AppIcon.icon" \
+ "$ROOT/apps/okestra-device/Assets.xcassets" \
  --compile "$BUILD_DIR" --output-format human-readable-text \
  --platform macosx --minimum-deployment-target 13.0 --app-icon AppIcon \
  --output-partial-info-plist "$BUILD_DIR/icon-info.plist"

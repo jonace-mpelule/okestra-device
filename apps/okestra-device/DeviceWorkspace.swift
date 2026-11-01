@@ -787,8 +787,9 @@ private struct DeviceInspector: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 9) {
-        Image(systemName: "square.stack.3d.up.fill").font(.system(size: 17)).foregroundStyle(
-          .primary.opacity(0.8))
+        Image("StackMark").resizable().renderingMode(.template).scaledToFit()
+          .frame(width: 22, height: 20).foregroundStyle(.primary.opacity(0.8))
+          .accessibilityHidden(true)
         Text("Okestra Device").font(.system(size: 17, weight: .semibold)).tracking(-0.5)
         Spacer()
       }.padding(.horizontal, 18).padding(.top, 38).padding(.bottom, 19)
