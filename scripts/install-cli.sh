@@ -1,0 +1,169 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+DEFAULT_BINARY=$PROJECT_DIR/bin/okestra-device
+if [ -x "$SCRIPT_DIR/okestra-device" ]; then
+  DEFAULT_BINARY=$SCRIPT_DIR/okestra-device
+fi
+BINARY=$DEFAULT_BINARY
+DESTINATION=${OKESTRA_DEVICE_INSTALL_BIN:-/usr/local/bin/okestra-device}
+MODE=menu
+ANDROID=no
+
+usage() {
+  printf '%s\n' 'Usage: install-cli.sh [--android] [--yes | --install-only | --connect-only] [path-to-okestra-device]'
+  printf '%s\n' 'Guided menu opens automatically in a terminal.'
+  printf '%s\n' 'For unattended pairing, set OKESTRA_DEVICE_SETUP_NAME, OKESTRA_DEVICE_SETUP_URL and OKESTRA_DEVICE_TOKEN.'
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --yes) MODE=yes ;;
+    --android) ANDROID=yes ;;
+    --install-only) MODE=install-only ;;
+    --connect-only) MODE=connect-only ;;
+    --help|-h) usage; exit 0 ;;
+    --*) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 1 ;;
+    *) BINARY=$1 ;;
+  esac
+  shift
+done
+
+if [ "$MODE" = menu ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; then
+  MODE=yes
+fi
+
+install_cli() {
+  if [ ! -x "$BINARY" ]; then
+    printf 'CLI binary not found or not executable: %s\n' "$BINARY" >&2
+    exit 1
+  fi
+  if [ ! -d "$(dirname "$DESTINATION")" ]; then
+    if [ -w "$(dirname "$(dirname "$DESTINATION")")" ]; then
+      mkdir -p "$(dirname "$DESTINATION")"
+    else
+      sudo mkdir -p "$(dirname "$DESTINATION")"
+    fi
+  fi
+  if [ -w "$(dirname "$DESTINATION")" ]; then
+    install -m 0755 "$BINARY" "$DESTINATION"
+  else
+    sudo install -m 0755 "$BINARY" "$DESTINATION"
+  fi
+  printf '\nInstalled %s\n' "$DESTINATION"
+  "$DESTINATION" version
+  if [ "$(uname -s)" = Darwin ]; then
+    for app in 'Okestra Device.app'; do
+      source_app="$SCRIPT_DIR/$app"
+      if [ ! -d "$source_app" ] && [ -d "$PROJECT_DIR/dist/$app" ]; then source_app="$PROJECT_DIR/dist/$app"; fi
+      if [ -d "$source_app" ]; then
+        mkdir -p "$HOME/Applications"
+        stage=$(mktemp -d "$HOME/Applications/.okestra-install.XXXXXX")
+        trap 'rm -rf "$stage"' EXIT HUP INT TERM
+        ditto "$source_app" "$stage/$app"
+        if [ -d "$HOME/Applications/$app" ]; then mv "$HOME/Applications/$app" "$stage/previous.app"; fi
+        if ! mv "$stage/$app" "$HOME/Applications/$app"; then
+          if [ -d "$stage/previous.app" ]; then mv "$stage/previous.app" "$HOME/Applications/$app"; fi
+          exit 1
+        fi
+        rm -rf "$stage"
+        trap - EXIT HUP INT TERM
+        printf 'Installed %s (quit and reopen it after an update)\n' "$HOME/Applications/$app"
+      fi
+    done
+    if [ "$ANDROID" = yes ]; then "$SCRIPT_DIR/setup-android-mac.sh"; fi
+  fi
+}
+
+ask_value() {
+  prompt=$1
+  fallback=$2
+  printf '%s [%s]: ' "$prompt" "$fallback" >&2
+  IFS= read -r answer || answer=
+  printf '%s\n' "${answer:-$fallback}"
+}
+
+read_secret() {
+  if [ -n "${OKESTRA_DEVICE_TOKEN:-}" ]; then
+    printf '%s\n' "$OKESTRA_DEVICE_TOKEN"
+    return
+  fi
+  if [ ! -t 0 ]; then
+    printf '%s\n' 'OKESTRA_DEVICE_TOKEN is required for unattended pairing.' >&2
+    return 1
+  fi
+  printf 'Paste the server token (input hidden): ' >&2
+  stty -echo
+  trap 'stty echo' EXIT HUP INT TERM
+  IFS= read -r secret || secret=
+  stty echo
+  trap - EXIT HUP INT TERM
+  printf '\n' >&2
+  printf '%s\n' "$secret"
+}
+
+connect_server() {
+  if [ ! -x "$DESTINATION" ]; then
+    printf 'CLI is not installed at %s. Choose installation first.\n' "$DESTINATION" >&2
+    exit 1
+  fi
+  if [ "$MODE" = menu ]; then
+    name=$(ask_value 'Server profile name' "${OKESTRA_DEVICE_SETUP_NAME:-devbox}")
+    address=$(ask_value 'Private server URL (for example http://100.64.0.10:8089)' "${OKESTRA_DEVICE_SETUP_URL:-http://SERVER_PRIVATE_ADDRESS:8089}")
+  else
+    name=${OKESTRA_DEVICE_SETUP_NAME:-devbox}
+    address=${OKESTRA_DEVICE_SETUP_URL:-}
+  fi
+  if [ -z "$address" ] || [ "$address" = 'http://SERVER_PRIVATE_ADDRESS:8089' ]; then
+    printf '%s\n' 'Enter a real private server URL before pairing.' >&2
+    exit 1
+  fi
+  token=$(read_secret)
+  if [ -z "$token" ]; then
+    printf '%s\n' 'Server token cannot be empty.' >&2
+    exit 1
+  fi
+  OKESTRA_DEVICE_TOKEN=$token "$DESTINATION" server add --name "$name" --url "$address"
+  unset token
+  if [ "$MODE" = menu ]; then
+    printf 'Run connection check now? [Y/n]: ' >&2
+    IFS= read -r choice || choice=
+    case "$choice" in
+      n|N) return ;;
+    esac
+  fi
+  if ! "$DESTINATION" android doctor; then
+    printf '\nCLI and profile are installed. Check the server address and network, then run: okestra-device android doctor\n' >&2
+  fi
+}
+
+case "$MODE" in
+  menu)
+    printf '\nOkestra Device setup\n'
+    printf '  1) Install CLI and connect to a server\n'
+    printf '  2) Install or update CLI only\n'
+    printf '  3) Connect the already installed CLI\n'
+    printf '  4) Exit\n'
+    printf 'Choose [1]: '
+    IFS= read -r choice || choice=
+    case "${choice:-1}" in
+      1) install_cli; connect_server ;;
+      2) install_cli ;;
+      3) connect_server ;;
+      4) exit 0 ;;
+      *) printf 'Invalid choice: %s\n' "$choice" >&2; exit 1 ;;
+    esac
+    ;;
+  install-only) install_cli ;;
+  connect-only) connect_server ;;
+  yes)
+    install_cli
+    if [ -n "${OKESTRA_DEVICE_SETUP_URL:-}" ]; then
+      connect_server
+    else
+      printf 'To connect later, rerun %s --connect-only with OKESTRA_DEVICE_SETUP_URL and OKESTRA_DEVICE_TOKEN.\n' "$0"
+    fi
+    ;;
+esac

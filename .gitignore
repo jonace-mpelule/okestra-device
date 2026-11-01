@@ -1,0 +1,10 @@
+.DS_Store
+.gocache/
+bin/
+dist/
+.env
+
+.build/
+.swiftpm/
+__pycache__/
+*.pyc
