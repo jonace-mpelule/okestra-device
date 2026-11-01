@@ -1,0 +1,131 @@
+{
+  "fill-specializations": [
+    {
+      "value": "system-light"
+    },
+    {
+      "appearance": "dark",
+      "value": "system-dark"
+    },
+    {
+      "appearance": "tinted",
+      "value": "automatic"
+    }
+  ],
+  "groups": [
+    {
+      "name": "Bottom stack",
+      "layers": [
+        {
+          "name": "Bottom",
+          "image-name": "Bottom.svg",
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.16,0.17,0.19,1"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.88,0.90,0.94,1"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": "automatic"
+            }
+          ],
+          "glass": true
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.28
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.15
+      },
+      "specular": true
+    },
+    {
+      "name": "Middle stack",
+      "layers": [
+        {
+          "name": "Middle",
+          "image-name": "Middle.svg",
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.16,0.17,0.19,1"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.88,0.90,0.94,1"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": "automatic"
+            }
+          ],
+          "glass": true
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.28
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.15
+      },
+      "specular": true
+    },
+    {
+      "name": "Top stack",
+      "layers": [
+        {
+          "name": "Top",
+          "image-name": "Top.svg",
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.16,0.17,0.19,1"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.88,0.90,0.94,1"
+              }
+            },
+            {
+              "appearance": "tinted",
+              "value": "automatic"
+            }
+          ],
+          "glass": true
+        }
+      ],
+      "lighting": "individual",
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.28
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.15
+      },
+      "specular": true
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

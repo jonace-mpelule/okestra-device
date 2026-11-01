@@ -31,6 +31,7 @@ cp "$NETWORK_JAR" "$APP/Contents/Resources/"
 cp "$ROOT/third_party/scrcpy/scrcpy-server-3.3.4.jar" "$APP/Contents/Resources/"
 cp "$ROOT/third_party/scrcpy/LICENSE" "$APP/Contents/Resources/SCRCPY-LICENSE"
 cp "$ROOT/third_party/scrcpy/README.md" "$APP/Contents/Resources/SCRCPY-NOTICE.md"
+"$ROOT/scripts/build-icon.sh" "$APP/Contents/Resources"
 # Ad-hoc signing gives the locally built bundle a consistent integrity seal; it is not notarization.
 codesign --force --deep --sign - "$APP"
 printf 'Built %s\n' "$APP"
